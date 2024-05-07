@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:american-flights-api="http://www.mulesoft.org/schema/mule/american-flights-api"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/american-flights-api http://www.mulesoft.org/schema/mule/american-flights-api/current/mule-american-flights-api.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<american-flights-api:config name="American_Flights_API_Config" doc:name="American Flights API Config" doc:id="a597f4b6-cd56-446b-be9f-4a20369fda50" property_host="${american.host}" property_port="${american.port}" property_basePath="${american.basepath}" property_protocol="${american.protocol}" />
+	<flow name="american-sys-apiFlow" doc:id="d1c10c02-b688-4be5-ae3d-d258d71964d2" >
+		<http:listener doc:name="Listener" doc:id="23928b07-56bf-4a8c-90f2-7936d5b04cb0" config-ref="HTTP_Listener_config" path="/american"/>
+		<american-flights-api:get-flights doc:name="Get flights" doc:id="175be005-55f8-413d-9141-e116f5e66883" config-ref="American_Flights_API_Config" client-id="${american.client_id}" client-secret="${american.client_secret}"/>
+		<ee:transform doc:name="Transform Message" doc:id="13277fe1-2d94-4530-9638-2e505abd7377" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload map (object, index) -> {
+    
+        "Airline": "American",
+        "ID": object.ID,
+        "code": object.code,
+        "price": object.price,
+        "departureDate": object.departureDate,
+        "origin": object.origin,
+        "destination": object.destination,
+        "emptySeats": object.emptySeats,
+        "plane": {
+            "type": object.plane."type",
+            "totalSeats": object.plane.totalSeats
+        }
+}
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="9c255452-38e9-4981-b6ae-653d6ab6a032" message="Entry log"/>
+	</flow>
+</mule>
